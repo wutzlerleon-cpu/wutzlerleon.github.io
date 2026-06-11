@@ -1,0 +1,42 @@
+# STARTEN SIE HIER! 🚀
+
+## Wie Sie die Anwendung verwenden:
+
+### Option 1: Mit Live Server (empfohlen)
+1. Öffnen Sie in VS Code: `public/index.html`
+2. Right-Click auf die Datei → "Open with Live Server"
+3. Der Browser öffnet sich automatisch!
+
+### Option 2: Datei direkt öffnen
+1. Öffnen Sie im Explorer: `Ergotool\public\index.html`
+2. Doppelklick → Browser öffnet sich
+
+### Option 3: Mit lokalem Webserver
+Wenn Sie einen einfachen Server haben, navigieren Sie zu:
+`http://localhost:PORTNUMMER/public/index.html`
+
+---
+
+## Erste Schritte:
+
+1. **Spielfinder starten** (`index.html`)
+   - Siehe oben für Startoptionen
+
+2. **Admin-Panel öffnen** (oben rechts auf "📋 Admin-Panel" klicken)
+   - Hier können Sie Diagnosen und Spiele hinzufügen
+   - Beim ersten Start sind Beispieldaten bereits geladen
+
+3. **Spielfinder testen**
+   - Wählen Sie eine Diagnose aus
+   - Klicken Sie "Passende Spiele finden"
+   - Die besten Spiele werden angezeigt!
+
+---
+
+## Weitere Informationen:
+
+- **README.md** - Vollständige Dokumentation
+- **Daten sichern** - Im Admin-Panel oben rechts unter "Tools"
+- **Browser-Kompatibilität** - Funktioniert in Chrome, Firefox, Edge, Safari
+
+Viel Spaß mit dem Spielfinder! 🎮
