@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Ergotherapie Spielfinder
 
 Ein vollständiges System zur Verwaltung und Empfehlung von Ergotherapie-Spielen basierend auf Diagnosen.

@@ -1,0 +1,942 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Ergotherapie Spielfinder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f4f6f8;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .back-link {
+            background: #95a5a6;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .back-link:hover {
+            background: #7f8c8d;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: #bdc3c7;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .tab-button.active {
+            background: #3498db;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 1000px) {
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #229954;
+        }
+
+        button.delete {
+            background: #e74c3c;
+        }
+
+        button.delete:hover {
+            background: #c0392b;
+        }
+
+        button.edit {
+            background: #f39c12;
+        }
+
+        button.edit:hover {
+            background: #d68910;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            overflow-x: auto;
+        }
+
+        .table th {
+            background: #34495e;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table td {
+            padding: 10px;
+            border-bottom: 1px solid #bdc3c7;
+        }
+
+        .table tr:hover {
+            background: #ecf0f1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .success {
+            background: #ecfdf3;
+            color: #27ae60;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 5px solid #27ae60;
+        }
+
+        .error {
+            background: #fadbd8;
+            color: #e74c3c;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .close-modal {
+            background: #bdc3c7;
+            border: none;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .close-modal:hover {
+            background: #95a5a6;
+        }
+
+        .export-import {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px solid #bdc3c7;
+        }
+
+        .export-import button {
+            margin-right: 10px;
+        }
+
+        #importFile {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>📋 Admin Panel</h1>
+    <a href="index.html" class="back-link">← Zurück zum Spielfinder</a>
+</div>
+
+<div class="tabs">
+    <button class="tab-button active" onclick="switchTab('diagnosen', this)">Diagnosen</button>
+    <button class="tab-button" onclick="switchTab('spiele', this)">Spiele</button>
+    <button class="tab-button" onclick="switchTab('kriterien', this)">Kriterien</button>
+    <button class="tab-button" onclick="switchTab('tools', this)">Tools</button>
+</div>
+
+<!-- DIAGNOSEN TAB -->
+<div id="diagnosen" class="tab-content active">
+    <div class="card">
+        <h2>Diagnosen verwalten</h2>
+        
+        <div id="diagnosen-message"></div>
+
+        <div class="form-group">
+            <label for="diagnose-name">Name:</label>
+            <input type="text" id="diagnose-name" placeholder="z.B. ADHS">
+        </div>
+
+        <div id="diagnose-criteria-fields"></div>
+
+        <button onclick="addDiagnose()">Diagnose hinzufügen</button>
+
+        <div id="diagnosen-container"></div>
+    </div>
+</div>
+
+<!-- SPIELE TAB -->
+<div id="spiele" class="tab-content">
+    <div class="card">
+        <h2>Spiele verwalten</h2>
+        
+        <div id="spiele-message"></div>
+
+        <div class="form-group">
+            <label for="spiel-name">Name:</label>
+            <input type="text" id="spiel-name" placeholder="z.B. Dobble">
+        </div>
+
+        <div class="form-group">
+            <label for="spiel-beschreibung">Beschreibung:</label>
+            <textarea id="spiel-beschreibung" placeholder="Kurzbeschreibung des Spiels"></textarea>
+        </div>
+
+        <div id="spiel-criteria-fields"></div>
+
+        <button onclick="addSpiel()">Spiel hinzufügen</button>
+
+        <div id="spiele-container"></div>
+    </div>
+</div>
+
+<!-- KRITERIEN TAB -->
+<div id="kriterien" class="tab-content">
+    <div class="card">
+        <h2>Kriterien verwalten</h2>
+        <div id="kriterien-message"></div>
+
+        <div class="form-group">
+            <label for="kriterium-name">Neues Kriterium:</label>
+            <input type="text" id="kriterium-name" placeholder="z.B. Konzentration">
+        </div>
+        <button onclick="addKriterium()">Kriterium hinzufügen</button>
+
+        <div id="kriterien-container"></div>
+        <p style="margin-top: 15px; color: #555;">Hinweis: Neue Kriterien werden automatisch für alle bestehenden Diagnosen und Spiele mit dem Wert 3 hinzugefügt.</p>
+    </div>
+</div>
+
+<!-- TOOLS TAB -->
+<div id="tools" class="tab-content">
+    <div class="card">
+        <h2>Export/Import & Tools</h2>
+        
+        <div id="tools-message"></div>
+
+        <h3>Daten exportieren</h3>
+        <p>Speichere alle Daten als JSON Datei:</p>
+        <button onclick="exportData()" style="background: #3498db;">📥 Daten exportieren</button>
+
+        <h3 style="margin-top: 20px;">Daten importieren</h3>
+        <p>Lade gespeicherte Daten aus einer JSON Datei:</p>
+        <button onclick="document.getElementById('importFile').click()" style="background: #3498db;">📤 Datei auswählen</button>
+        <input type="file" id="importFile" accept=".json">
+
+        <h3 style="margin-top: 20px;">Beispieldaten laden</h3>
+        <p>Lade Standard-Beispieldaten:</p>
+        <button onclick="loadSampleData()">🔄 Beispieldaten laden</button>
+
+        <h3 style="margin-top: 20px;">Webseite teilen</h3>
+        <p>Teile den Ordner <code>Ergotool/public</code> oder die Dateien <code>index.html</code> und <code>admin.html</code> mit anderen.</p>
+        <button onclick="copyShareInstructions()" style="background: #8e44ad;">📎 Teilen-Anleitung kopieren</button>
+
+        <h3 style="margin-top: 20px;">Alle Daten löschen</h3>
+        <p style="color: #e74c3c;">⚠️ Warnung: Dies kann nicht rückgängig gemacht werden!</p>
+        <button onclick="clearAllData()" style="background: #e74c3c;">🗑️ Alle Daten löschen</button>
+
+        <h3 style="margin-top: 20px;">Informationen</h3>
+        <p id="info-text"></p>
+    </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Bearbeiten</h2>
+            <button class="close-modal" onclick="closeModal()">✕</button>
+        </div>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    const CONFIG_KEY = 'ergotool_config';
+
+    const DB = {
+        diagnosen_key: 'ergotool_diagnosen',
+        spiele_key: 'ergotool_spiele',
+
+        getConfig() {
+            const data = localStorage.getItem(CONFIG_KEY);
+            return data ? JSON.parse(data) : null;
+        },
+
+        setConfig(config) {
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        },
+
+        ensureConfig() {
+            let config = this.getConfig();
+            if (!config || !Array.isArray(config.kriterien)) {
+                config = {
+                    kriterien: [
+                        { key: 'aufmerksamkeit', label: 'Aufmerksamkeit' },
+                        { key: 'gedaechtnis', label: 'Gedächtnis' },
+                        { key: 'feinmotorik', label: 'Feinmotorik' },
+                        { key: 'sozial', label: 'Sozial' }
+                    ]
+                };
+                this.setConfig(config);
+            }
+            return config;
+        },
+
+        getKriterien() {
+            return this.ensureConfig().kriterien;
+        },
+
+        getDiagnosen() {
+            const data = localStorage.getItem(this.diagnosen_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        setDiagnosen(entries) {
+            localStorage.setItem(this.diagnosen_key, JSON.stringify(entries));
+        },
+
+        getSpiele() {
+            const data = localStorage.getItem(this.spiele_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        setSpiele(entries) {
+            localStorage.setItem(this.spiele_key, JSON.stringify(entries));
+        },
+
+        fillMissingCriteria(entry) {
+            const result = { ...entry };
+            this.getKriterien().forEach(criterion => {
+                if (result[criterion.key] === undefined) {
+                    result[criterion.key] = 3;
+                }
+            });
+            return result;
+        }
+    };
+
+    let editingIndex = null;
+    let editingType = null;
+
+    function makeKey(label) {
+        return label
+            .toLowerCase()
+            .trim()
+            .replace(/ä/g, 'ae')
+            .replace(/ö/g, 'oe')
+            .replace(/ü/g, 'ue')
+            .replace(/ß/g, 'ss')
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_|_$/g, '');
+    }
+
+    function getCriteriaInputs(containerId, values = {}) {
+        const kriterien = DB.getKriterien();
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        kriterien.forEach(criterion => {
+            const value = values[criterion.key] !== undefined ? values[criterion.key] : 3;
+            container.innerHTML += `
+                <div class="form-group">
+                    <label for="${containerId}-${criterion.key}">${criterion.label}:</label>
+                    <input type="number" id="${containerId}-${criterion.key}" min="1" max="5" value="${value}">
+                </div>
+            `;
+        });
+    }
+
+    function getCriteriaValues(containerId) {
+        const values = {};
+        DB.getKriterien().forEach(criterion => {
+            const input = document.getElementById(`${containerId}-${criterion.key}`);
+            values[criterion.key] = parseInt(input.value, 10) || 3;
+        });
+        return values;
+    }
+
+    function renderCriteriaList() {
+        const kriterien = DB.getKriterien();
+        const container = document.getElementById('kriterien-container');
+        let html = '<table class="table"><thead><tr><th>Kriterium</th><th>Feldname</th><th>Aktionen</th></tr></thead><tbody>';
+
+        kriterien.forEach((criterion, index) => {
+            html += `
+                <tr>
+                    <td>${criterion.label}</td>
+                    <td>${criterion.key}</td>
+                    <td>
+                        <div class="actions">
+                            <button class="delete" onclick="deleteKriterium(${index})">Löschen</button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function updateAllData(kriterien) {
+        const diagnosen = DB.getDiagnosen().map(entry => {
+            const result = { name: entry.name };
+            if (entry.beschreibung) result.beschreibung = entry.beschreibung;
+            kriterien.forEach(criterion => {
+                result[criterion.key] = entry[criterion.key] !== undefined ? entry[criterion.key] : 3;
+            });
+            return result;
+        });
+
+        const spiele = DB.getSpiele().map(entry => {
+            const result = { name: entry.name, beschreibung: entry.beschreibung || '' };
+            kriterien.forEach(criterion => {
+                result[criterion.key] = entry[criterion.key] !== undefined ? entry[criterion.key] : 3;
+            });
+            return result;
+        });
+
+        DB.setDiagnosen(diagnosen);
+        DB.setSpiele(spiele);
+        DB.setConfig({ kriterien });
+    }
+
+    function switchTab(tabName, button) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+        document.getElementById(tabName).classList.add('active');
+        button.classList.add('active');
+
+        if (tabName === 'diagnosen') {
+            loadDiagnosen();
+        } else if (tabName === 'spiele') {
+            loadSpiele();
+        } else if (tabName === 'kriterien') {
+            renderCriteriaList();
+        } else if (tabName === 'tools') {
+            updateToolsInfo();
+        }
+    }
+
+    function initializeIfEmpty() {
+        DB.ensureConfig();
+        if (DB.getDiagnosen().length === 0 && DB.getSpiele().length === 0) {
+            loadSampleData();
+        } else {
+            const kriterien = DB.getKriterien();
+            updateAllData(kriterien);
+        }
+    }
+
+    function loadDiagnosen() {
+        const diagnosen = DB.getDiagnosen();
+        const kriterien = DB.getKriterien();
+        const container = document.getElementById('diagnosen-container');
+
+        let html = '<table class="table"><thead><tr><th>Name</th>';
+        html += kriterien.map(criterion => `<th>${criterion.label}</th>`).join('');
+        html += '<th>Aktionen</th></tr></thead><tbody>';
+
+        diagnosen.forEach((diagnose, index) => {
+            html += '<tr>';
+            html += `<td>${diagnose.name}</td>`;
+            html += kriterien.map(criterion => `<td>${diagnose[criterion.key] ?? 3}</td>`).join('');
+            html += `
+                <td>
+                    <div class="actions">
+                        <button class="edit" onclick="editDiagnose(${index})">Bearbeiten</button>
+                        <button class="delete" onclick="deleteDiagnose(${index})">Löschen</button>
+                    </div>
+                </td>
+            `;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function addDiagnose() {
+        const name = document.getElementById('diagnose-name').value.trim();
+        const values = getCriteriaValues('diagnose-criteria-fields');
+        if (!name) {
+            showMessage('diagnosen-message', 'Bitte geben Sie einen Namen ein', 'error');
+            return;
+        }
+
+        const diagnosen = DB.getDiagnosen();
+        if (diagnosen.some(item => item.name === name)) {
+            showMessage('diagnosen-message', 'Diese Diagnose existiert bereits', 'error');
+            return;
+        }
+
+        diagnosen.push({ name, ...values });
+        DB.setDiagnosen(diagnosen);
+        showMessage('diagnosen-message', 'Diagnose hinzugefügt', 'success');
+        document.getElementById('diagnose-name').value = '';
+        loadDiagnosen();
+    }
+
+    function editDiagnose(index) {
+        editingIndex = index;
+        editingType = 'diagnose';
+
+        const diagnosen = DB.getDiagnosen();
+        const diagnose = diagnosen[index];
+
+        document.getElementById('modalTitle').textContent = 'Diagnose bearbeiten';
+        document.getElementById('modalBody').innerHTML = `
+            <div class="form-group">
+                <label for="edit-name">Name:</label>
+                <input type="text" id="edit-name" value="${diagnose.name}">
+            </div>
+            <div id="edit-criteria-fields"></div>
+            <button onclick="saveDiagnose()">Speichern</button>
+        `;
+
+        getCriteriaInputs('edit-criteria-fields', diagnose);
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    function saveDiagnose() {
+        const name = document.getElementById('edit-name').value.trim();
+        const values = getCriteriaValues('edit-criteria-fields');
+        const diagnosen = DB.getDiagnosen();
+        diagnosen[editingIndex] = { name, ...values };
+        DB.setDiagnosen(diagnosen);
+        closeModal();
+        loadDiagnosen();
+    }
+
+    function deleteDiagnose(index) {
+        if (confirm('Diagnose wirklich löschen?')) {
+            const diagnosen = DB.getDiagnosen();
+            diagnosen.splice(index, 1);
+            DB.setDiagnosen(diagnosen);
+            loadDiagnosen();
+        }
+    }
+
+    function loadSpiele() {
+        const spiele = DB.getSpiele();
+        const kriterien = DB.getKriterien();
+        const container = document.getElementById('spiele-container');
+
+        let html = '<table class="table"><thead><tr><th>Name</th><th>Beschreibung</th>';
+        html += kriterien.map(criterion => `<th>${criterion.label}</th>`).join('');
+        html += '<th>Aktionen</th></tr></thead><tbody>';
+
+        spiele.forEach((spiel, index) => {
+            html += '<tr>';
+            html += `<td><strong>${spiel.name}</strong></td>`;
+            html += `<td>${spiel.beschreibung || '-'}</td>`;
+            html += kriterien.map(criterion => `<td>${spiel[criterion.key] ?? 3}</td>`).join('');
+            html += `
+                <td>
+                    <div class="actions">
+                        <button class="edit" onclick="editSpiel(${index})">Bearbeiten</button>
+                        <button class="delete" onclick="deleteSpiel(${index})">Löschen</button>
+                    </div>
+                </td>
+            `;
+            html += '</tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function addSpiel() {
+        const name = document.getElementById('spiel-name').value.trim();
+        const beschreibung = document.getElementById('spiel-beschreibung').value.trim();
+        const values = getCriteriaValues('spiel-criteria-fields');
+
+        if (!name) {
+            showMessage('spiele-message', 'Bitte geben Sie einen Namen ein', 'error');
+            return;
+        }
+
+        const spiele = DB.getSpiele();
+        if (spiele.some(item => item.name === name)) {
+            showMessage('spiele-message', 'Dieses Spiel existiert bereits', 'error');
+            return;
+        }
+
+        spiele.push({ name, beschreibung, ...values });
+        DB.setSpiele(spiele);
+        showMessage('spiele-message', 'Spiel hinzugefügt', 'success');
+        document.getElementById('spiel-name').value = '';
+        document.getElementById('spiel-beschreibung').value = '';
+        loadSpiele();
+    }
+
+    function editSpiel(index) {
+        editingIndex = index;
+        editingType = 'spiel';
+
+        const spiele = DB.getSpiele();
+        const spiel = spiele[index];
+
+        document.getElementById('modalTitle').textContent = 'Spiel bearbeiten';
+        document.getElementById('modalBody').innerHTML = `
+            <div class="form-group">
+                <label for="edit-name">Name:</label>
+                <input type="text" id="edit-name" value="${spiel.name}">
+            </div>
+            <div class="form-group">
+                <label for="edit-beschreibung">Beschreibung:</label>
+                <textarea id="edit-beschreibung">${spiel.beschreibung || ''}</textarea>
+            </div>
+            <div id="edit-criteria-fields"></div>
+            <button onclick="saveSpiel()">Speichern</button>
+        `;
+
+        getCriteriaInputs('edit-criteria-fields', spiel);
+        document.getElementById('editModal').classList.add('active');
+    }
+
+    function saveSpiel() {
+        const name = document.getElementById('edit-name').value.trim();
+        const beschreibung = document.getElementById('edit-beschreibung').value.trim();
+        const values = getCriteriaValues('edit-criteria-fields');
+        const spiele = DB.getSpiele();
+        spiele[editingIndex] = { name, beschreibung, ...values };
+        DB.setSpiele(spiele);
+        closeModal();
+        loadSpiele();
+    }
+
+    function deleteSpiel(index) {
+        if (confirm('Spiel wirklich löschen?')) {
+            const spiele = DB.getSpiele();
+            spiele.splice(index, 1);
+            DB.setSpiele(spiele);
+            loadSpiele();
+        }
+    }
+
+    function addKriterium() {
+        const label = document.getElementById('kriterium-name').value.trim();
+        if (!label) {
+            showMessage('kriterien-message', 'Bitte geben Sie einen Namen für das Kriterium ein', 'error');
+            return;
+        }
+
+        const key = makeKey(label);
+        if (!key) {
+            showMessage('kriterien-message', 'Der Name ist ungültig', 'error');
+            return;
+        }
+
+        const kriterien = DB.getKriterien();
+        if (kriterien.some(item => item.key === key || item.label.toLowerCase() === label.toLowerCase())) {
+            showMessage('kriterien-message', 'Dieses Kriterium existiert bereits', 'error');
+            return;
+        }
+
+        kriterien.push({ key, label });
+        updateAllData(kriterien);
+        getCriteriaInputs('diagnose-criteria-fields');
+        getCriteriaInputs('spiel-criteria-fields');
+        renderCriteriaList();
+        showMessage('kriterien-message', 'Kriterium hinzugefügt', 'success');
+        document.getElementById('kriterium-name').value = '';
+    }
+
+    function deleteKriterium(index) {
+        const kriterien = DB.getKriterien();
+        if (kriterien.length <= 1) {
+            showMessage('kriterien-message', 'Mindestens ein Kriterium muss erhalten bleiben', 'error');
+            return;
+        }
+        if (!confirm('Diesen Kriterienwert löschen? Bestehende Diagnosen und Spiele werden angepasst.')) {
+            return;
+        }
+
+        kriterien.splice(index, 1);
+        updateAllData(kriterien);
+        getCriteriaInputs('diagnose-criteria-fields');
+        getCriteriaInputs('spiel-criteria-fields');
+        renderCriteriaList();
+        loadDiagnosen();
+        loadSpiele();
+        showMessage('kriterien-message', 'Kriterium gelöscht', 'success');
+    }
+
+    function exportData() {
+        const data = {
+            diagnosen: DB.getDiagnosen(),
+            spiele: DB.getSpiele(),
+            config: DB.getConfig(),
+            exportDate: new Date().toISOString()
+        };
+
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ergotool_backup_${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        showMessage('tools-message', 'Daten exportiert!', 'success');
+    }
+
+    function importData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.diagnosen || !data.spiele || !data.config) {
+                    showMessage('tools-message', 'Ungültiges Dateiformat', 'error');
+                    return;
+                }
+                DB.setConfig(data.config);
+                DB.setDiagnosen(data.diagnosen);
+                DB.setSpiele(data.spiele);
+                getCriteriaInputs('diagnose-criteria-fields');
+                getCriteriaInputs('spiel-criteria-fields');
+                renderCriteriaList();
+                loadDiagnosen();
+                loadSpiele();
+                showMessage('tools-message', 'Daten erfolgreich importiert!', 'success');
+            } catch (error) {
+                showMessage('tools-message', 'Fehler beim Importieren: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    function loadSampleData() {
+        const kriterien = DB.getKriterien();
+        const sampleDiagnosen = [
+            { name: 'ADHS', aufmerksamkeit: 5, gedaechtnis: 2, feinmotorik: 2, sozial: 3 },
+            { name: 'Demenz', aufmerksamkeit: 3, gedaechtnis: 5, feinmotorik: 1, sozial: 2 },
+            { name: 'Schlaganfall', aufmerksamkeit: 3, gedaechtnis: 2, feinmotorik: 5, sozial: 2 }
+        ];
+        const sampleSpiele = [
+            { name: 'Dobble', beschreibung: 'Schnelles Reaktionsspiel', aufmerksamkeit: 5, gedaechtnis: 2, feinmotorik: 1, sozial: 3 },
+            { name: 'Memory', beschreibung: 'Klassisches Merkspiel', aufmerksamkeit: 3, gedaechtnis: 5, feinmotorik: 1, sozial: 1 },
+            { name: 'Jenga', beschreibung: 'Geschicklichkeitsspiel mit Blöcken', aufmerksamkeit: 4, gedaechtnis: 1, feinmotorik: 5, sozial: 2 },
+            { name: 'Activity', beschreibung: 'Kniffel- und Ratespiel', aufmerksamkeit: 3, gedaechtnis: 2, feinmotorik: 1, sozial: 5 },
+            { name: 'Halli Galli', beschreibung: 'Schnelles Kartenspiel', aufmerksamkeit: 5, gedaechtnis: 2, feinmotorik: 2, sozial: 3 }
+        ];
+
+        const fillMissing = item => {
+            const result = { ...item };
+            kriterien.forEach(criterion => {
+                if (result[criterion.key] === undefined) {
+                    result[criterion.key] = 3;
+                }
+            });
+            return result;
+        };
+
+        DB.setDiagnosen(sampleDiagnosen.map(fillMissing));
+        DB.setSpiele(sampleSpiele.map(fillMissing));
+        getCriteriaInputs('diagnose-criteria-fields');
+        getCriteriaInputs('spiel-criteria-fields');
+        loadDiagnosen();
+        loadSpiele();
+        updateToolsInfo();
+        showMessage('tools-message', 'Beispieldaten geladen!', 'success');
+    }
+
+    function clearAllData() {
+        if (confirm('Alle Daten wirklich löschen? Dies kann nicht rückgängig gemacht werden!')) {
+            DB.setDiagnosen([]);
+            DB.setSpiele([]);
+            updateToolsInfo();
+            loadDiagnosen();
+            loadSpiele();
+            showMessage('tools-message', 'Alle Daten gelöscht!', 'success');
+        }
+    }
+
+    function updateToolsInfo() {
+        const diagnosen = DB.getDiagnosen();
+        const spiele = DB.getSpiele();
+        document.getElementById('info-text').innerHTML = `
+            <strong>Aktuelle Datenmengen:</strong><br>
+            📌 Diagnosen: ${diagnosen.length}<br>
+            🎮 Spiele: ${spiele.length}<br>
+            💾 Speichergröße: ~${(JSON.stringify({diagnosen, spiele}).length / 1024).toFixed(2)} KB
+        `;
+    }
+
+    function copyShareInstructions() {
+        const text = `Die Website besteht aus den Dateien index.html und admin.html im Ordner Ergotool/public. Sende diesen Ordner an andere, damit sie die Website lokal im Browser öffnen können. Alternativ lade den Ordner auf einen Dienst wie GitHub Pages, Dropbox oder OneDrive hoch.`;
+        navigator.clipboard.writeText(text).then(() => {
+            showMessage('tools-message', 'Teilen-Anleitung kopiert!', 'success');
+        }).catch(() => {
+            showMessage('tools-message', 'Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'error');
+        });
+    }
+
+    function showMessage(elementId, message, type) {
+        const div = document.getElementById(elementId);
+        div.className = type;
+        div.innerHTML = message;
+        setTimeout(() => {
+            div.innerHTML = '';
+            div.className = '';
+        }, 3000);
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').classList.remove('active');
+        editingIndex = null;
+        editingType = null;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        DB.ensureConfig();
+        initializeIfEmpty();
+        getCriteriaInputs('diagnose-criteria-fields');
+        getCriteriaInputs('spiel-criteria-fields');
+        loadDiagnosen();
+        loadSpiele();
+        renderCriteriaList();
+        updateToolsInfo();
+        document.getElementById('importFile').addEventListener('change', importData);
+    });
+</script>
+
+</body>
+</html>
