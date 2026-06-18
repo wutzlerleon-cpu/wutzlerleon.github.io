@@ -1,0 +1,81 @@
+
+<div class="card">
+    <h2>Empfehlungen</h2>
+    <div id="ergebnis"></div>
+</div>
+
+<script>
+    const CONFIG_KEY = 'ergotool_config';
+
+    const DB = {
+        diagnosen_key: 'ergotool_diagnosen',
+        spiele_key: 'ergotool_spiele',
+
+        getConfig() {
+            const data = localStorage.getItem(CONFIG_KEY);
+            return data ? JSON.parse(data) : null;
+        },
+
+        setConfig(config) {
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        },
+
+        ensureConfig() {
+            let config = this.getConfig();
+            if (!config || !Array.isArray(config.kriterien)) {
+                config = {
+                    kriterien: [
+                        { key: 'aufmerksamkeit', label: 'Aufmerksamkeit' },
+                        { key: 'gedaechtnis', label: 'Gedächtnis' },
+                        { key: 'feinmotorik', label: 'Feinmotorik' },
+                        { key: 'sozial', label: 'Sozial' }
+                    ]
+                };
+                this.setConfig(config);
+            }
+            return config;
+        },
+
+        getKriterien() {
+            return this.ensureConfig().kriterien;
+        },
+
+        getDiagnosen() {
+            const data = localStorage.getItem(this.diagnosen_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        getSpiele() {
+            const data = localStorage.getItem(this.spiele_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        fillMissingCriteria(entry) {
+            const result = { ...entry };
+            this.getKriterien().forEach(criterion => {
+                if (result[criterion.key] === undefined) {
+                    result[criterion.key] = 3;
+                }
+            });
+            return result;
+        }
+    };
+    window.DB = DB;
+
+    function loadDiagnosen() {
+        DB.ensureConfig();
+        const diagnosen = DB.getDiagnosen();
+        const select = document.getElementById('diagnose');
+        const infoDiv = document.getElementById('diagnosen-info');
+
+        select.innerHTML = '<option value="">-- Bitte wählen --</option>';
+
+        if (diagnosen.length === 0) {
+            infoDiv.innerHTML = '<strong>�?�️ Hinweis:</strong> Keine Diagnosen vorhanden. Bitte fügen Sie zuerst Diagnosen im <a href="admin.html">Admin-Panel</a> hinzu.';
+            return;
+        }
+
+        infoDiv.innerHTML = '';
+        diagnosen.forEach((diagnose, index) => {

@@ -1,0 +1,362 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ergotherapie Spielfinder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f4f6f8;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .admin-link {
+            background: #95a5a6;
+            color: white;
+            padding: 10px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .admin-link:hover {
+            background: #7f8c8d;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            border-left: 5px solid #27ae60;
+            background: #ecfdf3;
+            border-radius: 5px;
+        }
+
+        .result strong {
+            color: #27ae60;
+            display: block;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .result-score {
+            color: #555;
+            font-size: 14px;
+        }
+
+        .result-description {
+            color: #666;
+            font-size: 14px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .loading {
+            color: #3498db;
+            font-style: italic;
+        }
+
+        .error {
+            color: #e74c3c;
+            background: #fadbd8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+
+        .info {
+            color: #3498db;
+            background: #d6eaf8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 5px solid #3498db;
+        }
+    </style>
+    <script>
+        console.log('index.html: Head-Script ausgeführt');
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-db.js"></script>
+</head>
+<body>
+
+<div class="header">
+    <h1>🎲 Ergotherapie Spielfinder</h1>
+    <a href="admin.html" class="admin-link">📋 Admin-Panel</a>
+</div>
+<div id="firebase-status" class="info" style="display:none; margin-bottom: 15px;"></div>
+<noscript><div class="error" style="display:block; margin-bottom: 15px;">JavaScript ist deaktiviert oder wird nicht geladen. Bitte aktiviere JavaScript oder lade die Seite über einen Webserver (http/https).</div></noscript>
+<div id="debug-js" class="error" style="display:none; margin-bottom: 15px;"></div>
+
+<div class="card">
+    <h2>Krankheitsbild auswählen</h2>
+    <label for="diagnose">Diagnose:</label>
+    <select id="diagnose">
+        <option value="">-- Bitte wählen --</option>
+    </select>
+    <button onclick="spieleEmpfehlen()">Passende Spiele finden</button>
+    <div id="diagnosen-info" class="info"></div>
+</div>
+
+<div class="card">
+    <h2>Empfehlungen</h2>
+    <div id="ergebnis"></div>
+</div>
+
+<script>
+    const CONFIG_KEY = 'ergotool_config';
+
+    const DB = {
+        diagnosen_key: 'ergotool_diagnosen',
+        spiele_key: 'ergotool_spiele',
+
+        getConfig() {
+            const data = localStorage.getItem(CONFIG_KEY);
+            return data ? JSON.parse(data) : null;
+        },
+
+        setConfig(config) {
+            localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+        },
+
+        ensureConfig() {
+            let config = this.getConfig();
+            if (!config || !Array.isArray(config.kriterien)) {
+                config = {
+                    kriterien: [
+                        { key: 'aufmerksamkeit', label: 'Aufmerksamkeit' },
+                        { key: 'gedaechtnis', label: 'Gedächtnis' },
+                        { key: 'feinmotorik', label: 'Feinmotorik' },
+                        { key: 'sozial', label: 'Sozial' }
+                    ]
+                };
+                this.setConfig(config);
+            }
+            return config;
+        },
+
+        getKriterien() {
+            return this.ensureConfig().kriterien;
+        },
+
+        getDiagnosen() {
+            const data = localStorage.getItem(this.diagnosen_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        setDiagnosen(entries) {
+            localStorage.setItem(this.diagnosen_key, JSON.stringify(entries));
+        },
+
+        getSpiele() {
+            const data = localStorage.getItem(this.spiele_key);
+            const entries = data ? JSON.parse(data) : [];
+            return entries.map(entry => this.fillMissingCriteria(entry));
+        },
+
+        setSpiele(entries) {
+            localStorage.setItem(this.spiele_key, JSON.stringify(entries));
+        },
+
+        fillMissingCriteria(entry) {
+            const result = { ...entry };
+            this.getKriterien().forEach(criterion => {
+                if (result[criterion.key] === undefined) {
+                    result[criterion.key] = 3;
+                }
+            });
+            return result;
+        }
+    };
+    window.DB = DB;
+
+    function loadDiagnosen() {
+        DB.ensureConfig();
+        const diagnosen = DB.getDiagnosen();
+        const select = document.getElementById('diagnose');
+        const infoDiv = document.getElementById('diagnosen-info');
+
+        select.innerHTML = '<option value="">-- Bitte wählen --</option>';
+
+        if (diagnosen.length === 0) {
+            infoDiv.innerHTML = '<strong>ℹ️ Hinweis:</strong> Keine Diagnosen vorhanden. Bitte fügen Sie zuerst Diagnosen im <a href="admin.html">Admin-Panel</a> hinzu.';
+            return;
+        }
+
+        infoDiv.innerHTML = '';
+        diagnosen.forEach((diagnose, index) => {
+            const option = document.createElement('option');
+            option.value = index;
+            option.textContent = diagnose.name;
+            select.appendChild(option);
+        });
+    }
+
+    function spieleEmpfehlen() {
+        const select = document.getElementById('diagnose');
+        const diagnoseIndex = select.value;
+        const ergebnisDiv = document.getElementById('ergebnis');
+
+        if (!diagnoseIndex && diagnoseIndex !== '0') {
+            ergebnisDiv.innerHTML = '<div class="error">Bitte wählen Sie eine Diagnose aus</div>';
+            return;
+        }
+
+        const diagnosen = DB.getDiagnosen();
+        const spiele = DB.getSpiele();
+        const kriterien = DB.getKriterien();
+
+        if (spiele.length === 0) {
+            ergebnisDiv.innerHTML = '<div class="error">Keine Spiele vorhanden. Bitte fügen Sie zuerst Spiele im Admin-Panel hinzu.</div>';
+            return;
+        }
+
+        const diagnose = diagnosen[parseInt(diagnoseIndex, 10)];
+        const ergebnisse = spiele.map(spiel => {
+            let score = 0;
+            kriterien.forEach(criterion => {
+                const diagnoseWert = diagnose[criterion.key] ?? 3;
+                const spielWert = spiel[criterion.key] ?? 3;
+                score += 5 - Math.abs(spielWert - diagnoseWert);
+            });
+
+            return {
+                ...spiel,
+                score
+            };
+        }).sort((a, b) => b.score - a.score);
+
+        let html = '';
+        ergebnisse.forEach((spiel, rank) => {
+            html += `
+                <div class="result">
+                    <strong>${rank + 1}. ${spiel.name}</strong>
+                    <div class="result-score">Passung: ${spiel.score} Punkte</div>
+                    ${spiel.beschreibung ? `<div class="result-description">${spiel.beschreibung}</div>` : ''}
+                </div>
+            `;
+        });
+
+        ergebnisDiv.innerHTML = html;
+    }
+
+window.setFirebaseStatus = function(status, message) {
+            const el = document.getElementById('firebase-status');
+            if (!el) return;
+            if (status === 'connected') {
+                el.className = 'info';
+                el.textContent = 'Firebase verbunden. Daten werden synchronisiert.';
+                el.style.display = 'block';
+                return;
+            }
+            if (status === 'disabled') {
+                el.className = 'error';
+                el.textContent = 'Firebase deaktiviert: ' + (message || 'Bitte Firebase-Konfiguration prüfen.');
+                el.style.display = 'block';
+                return;
+            }
+            if (status === 'error') {
+                el.className = 'error';
+                el.textContent = 'Firebase-Fehler: ' + (message || 'Unbekannter Fehler.');
+                el.style.display = 'block';
+                return;
+            }
+            el.className = 'info';
+            el.textContent = message || ('Firebase-Status: ' + status);
+            el.style.display = 'block';
+        };
+
+        function waitForRemoteInit(retries = 0) {
+            const debugEl = document.getElementById('debug-js');
+            if (window.DB && typeof window.DB.initRemote === 'function') {
+                if (debugEl) {
+                    debugEl.className = 'info';
+                    debugEl.textContent = 'JavaScript funktioniert; Seite ist geladen.';
+                    debugEl.style.display = 'block';
+                }
+                window.setFirebaseStatus('initializing', 'Firebase initialisiere...');
+                window.DB.onRemoteUpdate(loadDiagnosen);
+                window.DB.initRemote();
+                return;
+            }
+            if (retries >= 50) {
+                if (debugEl) {
+                    debugEl.className = 'error';
+                    debugEl.textContent = 'DB.initRemote wurde nicht gefunden.';
+                    debugEl.style.display = 'block';
+                }
+                return;
+            }
+            setTimeout(() => waitForRemoteInit(retries + 1), 100);
+        }
+
+        window.addEventListener('load', () => {
+            loadDiagnosen();
+            waitForRemoteInit();
+        });
+    </script>
+
+</body>
+</html>
